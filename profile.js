@@ -184,7 +184,7 @@ router.post('/sendVerificationEmail', async (req, res) => {
         }
 
         // Construct the verification link
-        const verificationLink = `${MY_WEBSITE_URL}/verify-email?token=${verificationToken}`;
+        const verificationLink = `${process.env.MY_WEBSITE_URL}/verify-email?token=${verificationToken}`;
 
         // Send the verification email
         await transporter.sendMail({
