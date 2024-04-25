@@ -12,7 +12,7 @@ app.use(expressSession({
     resave: true,
     saveUninitialized: true,
     store: new MongoDBStore({
-        uri: process.env.MONGODB_URI + "/sessions",
+        uri: process.env.MONGODB_URI,
         collection: 'sessions'
     })
 }));
