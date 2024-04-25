@@ -3,19 +3,33 @@ const expressSession = require('express-session');
 const app = express();
 const path = require("path");
 const mongoose = require('mongoose');
-var bodyParser = require('body-parser');
-const { log } = require('console');
+const bodyParser = require('body-parser');
+const MongoDBStore = require('connect-mongodb-session')(expressSession);
 require('dotenv').config();
 app.use(bodyParser.urlencoded({ extended: false }))
-// const router=express.Router();
 
+// Connect to MongoDB
+mongoose.connect(process.env.MONGODB_URI + "/ByteCodexUser", { useNewUrlParser: true, useUnifiedTopology: true });
+const db = mongoose.connection;
+
+// Initialize MongoDBStore
+const store = new MongoDBStore({
+    uri: process.env.MONGODB_URI + "/ByteCodexUser",
+    collection: 'sessions'
+});
+
+// Catch errors in MongoDBStore
+store.on('error', function(error) {
+    console.error(error);
+});
+
+// Use express-session with MongoDBStore
 app.use(expressSession({
     secret: 'key',
     resave: true,
-    saveUninitialized: true
-}))
-// Connect to MongoDB
-var UserConnection = mongoose.createConnection(process.env.MONGODB_URI + "/ByteCodexUser");
+    saveUninitialized: true,
+    store: store
+}));
 
 // Define user schema and model
 const userLoginSchema = new mongoose.Schema({
@@ -23,7 +37,7 @@ const userLoginSchema = new mongoose.Schema({
     email: String,
     password: String
 });
-const User = UserConnection.model('userlogins', userLoginSchema);
+const User = mongoose.model('userlogins', userLoginSchema);
 
 app.use('/static', express.static('static'))
 
@@ -47,30 +61,25 @@ app.post('/login', function (req, res) {
     // Perform authentication (e.g., check credentials in database)
     // Redirect user to appropriate page
     try {
-        User.find({ username: username })
-            .then(doc => {
-                if (doc[0].password == password) {
+        User.findOne({ username: username })
+            .then(user => {
+                if (user && user.password === password) {
                     req.session.user = username;
-                    // res.render('home.pug',params);
                     res.redirect('/home');
-                }
-                else {
-                    // Authentication failed
+                } else {
                     res.status(401).send('Invalid username or password');
                 }
             })
             .catch(err => {
-                console.error("No such user found");
-                res.status(401).send('No such user');
-            })
-    
+                console.error("Error:", err);
+                res.status(401).send('An error occurred');
+            });
     } catch (err) {
         console.error(err);
     }
 });
 
 app.post('/signup', function (req, res) {
-
     const { username, email, password } = req.body;
 
     const newUser = new User({
@@ -80,24 +89,18 @@ app.post('/signup', function (req, res) {
     });
     try {
         newUser.save();
-        console.log(username);
         req.session.user = username;
         res.redirect('/home');
     } catch (err) {
         console.error(err);
     }
 });
+
 app.get('/home', function (req, res) {
-    console.log(req.session.user);
     if (req.session.user) {
-        d = { login: true, username: req.session.user }
-        params = { data: JSON.stringify(d) };
-        res.render('home.pug', params);
-    }
-    else {
-        d = { login: false }
-        params = { data: JSON.stringify(d) };
-        res.render('home.pug', params);
+        res.render('home.pug', { login: true, username: req.session.user });
+    } else {
+        res.render('home.pug', { login: false });
     }
 });
 

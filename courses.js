@@ -1,44 +1,49 @@
-const express=require('express');
-const expressSession=require('express-session');
-const app=express();
-const path=require("path");
-const router=express.Router();
+const express = require('express');
+const expressSession = require('express-session');
+const app = express();
+const path = require("path");
+const router = express.Router();
 require('dotenv').config();
+const mongoose = require('mongoose');
+const MongoDBStore = require('connect-mongodb-session')(expressSession);
 
 app.use(expressSession({
-    secret:'key',
-    resave:true,
-    saveUninitialized:true
-}))
+    secret: 'key',
+    resave: true,
+    saveUninitialized: true,
+    store: new MongoDBStore({
+        uri: process.env.MONGODB_URI + "/sessions",
+        collection: 'sessions'
+    })
+}));
 
 // MONGOOSE
-const mongoose=require('mongoose');
-var CourseConnection = mongoose.createConnection(process.env.MONGODB_URI + "/Course");
+const CourseConnection = mongoose.createConnection(process.env.MONGODB_URI + "/Course");
 
-app.use('/static',express.static('static'))
+app.use('/static', express.static('static'))
 
 // PUG Configurations
-app.set('view engine','pug')
-app.set('views',path.join(__dirname,'views'))
+app.set('view engine', 'pug')
+app.set('views', path.join(__dirname, 'views'))
 
 // SCHEMA
 // COURSE
-const courseSchema= new mongoose.Schema({
-    name:String,
-    domain:String,
-    duration:String,
-    desc:String
+const courseSchema = new mongoose.Schema({
+    name: String,
+    domain: String,
+    duration: String,
+    desc: String
 });
 const Course = CourseConnection.model('courses', courseSchema);
 
 // USER
-var UserConnection = mongoose.createConnection(process.env.MONGODB_URI + "/ByteCodexUser");
+const UserConnection = mongoose.createConnection(process.env.MONGODB_URI + "/ByteCodexUser");
 
 const userLoginSchema = new mongoose.Schema({
     username: String,
     email: String,
     password: String,
-    enrolledCourses: { type : Array , "default" : [] }
+    enrolledCourses: { type: Array, "default": [] }
 });
 const User = UserConnection.model('userlogins', userLoginSchema);
 
@@ -56,7 +61,7 @@ router.get('/', function (req, res) {
                             data: doc,
                             login: true,
                             username: req.session.user,
-                            userInfo:userdoc
+                            userInfo: userdoc
                         };
                         params = { obj: JSON.stringify(d) };
                         res.status(200).render("courses.pug", params);
@@ -74,7 +79,7 @@ router.get('/', function (req, res) {
         })
 })
 
-router.post('/enroll', async function(req, res) {
+router.post('/enroll', async function (req, res) {
     const courseId = req.query.courseId;
     try {
         const user = await User.findOne({ username: req.session.user });
@@ -113,4 +118,4 @@ router.delete('/enroll', async function (req, res) {
     }
 });
 
-module.exports=router;
+module.exports = router;

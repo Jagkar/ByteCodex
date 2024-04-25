@@ -7,18 +7,24 @@ const app = express();
 const path = require("path");
 const router = express.Router();
 require('dotenv').config();
+const mongoose = require('mongoose');
+const MongoDBStore = require('connect-mongodb-session')(expressSession);
 
 app.use(expressSession({
     secret: 'key',
     resave: true,
-    saveUninitialized: true
+    saveUninitialized: true,
+    store: new MongoDBStore({
+        uri: process.env.MONGODB_URI + "/sessions",
+        collection: 'sessions'
+    })
 }));
 
 app.use(bodyParser.json()); // Parse JSON bodies
 
 // MONGOOSE
-const mongoose = require('mongoose');
-var CourseConnection = mongoose.createConnection(process.env.MONGODB_URI + "/Course");
+const CourseConnection = mongoose.createConnection(process.env.MONGODB_URI + "/Course");
+const UserConnection = mongoose.createConnection(process.env.MONGODB_URI + "/ByteCodexUser");
 
 app.use('/static', express.static('static'));
 
@@ -37,8 +43,6 @@ const courseSchema = new mongoose.Schema({
 const Course = CourseConnection.model('courses', courseSchema);
 
 // USER
-var UserConnection = mongoose.createConnection(process.env.MONGODB_URI + "/ByteCodexUser");
-
 const userLoginSchema = new mongoose.Schema({
     username: String,
     email: String,
@@ -47,7 +51,6 @@ const userLoginSchema = new mongoose.Schema({
     verifiedEmail: { type: Boolean, default: false }, // Add verifiedEmail field
     verificationToken: String // Add verificationToken field
 });
-
 const User = UserConnection.model('userlogins', userLoginSchema);
 
 router.get('/', function (req, res) {
@@ -82,7 +85,6 @@ router.get('/', function (req, res) {
             res.status(500).send('Internal Server Error');
         })
 });
-app.use(express.json());
 
 // DELETE route for deleting the user account
 router.delete('/deleteAccount', function (req, res) {
@@ -224,7 +226,5 @@ router.get('/verify-email', async (req, res) => {
         res.status(500).send('Error verifying email');
     }
 });
-
-
 
 module.exports = router;
