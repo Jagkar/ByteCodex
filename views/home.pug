@@ -1,0 +1,59 @@
+doctype html
+html(lang="en")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1.0")
+    title ByteCodex | Learn To code | Free Online courses
+    link(rel="stylesheet", href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css", integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p", crossorigin="anonymous")
+    link(rel="stylesheet", href="../static/home.css")
+  body
+    .navbar
+      #logo
+        img(src="../static/img/logo/logo.png", alt="")
+      #menu
+        ul
+          li.list-inline-item.h6.bg-bottom.selected-button
+            a(href="/") Home
+          li.list-inline-item.h6.bg-bottom
+            a(href="/courses") Courses
+          li.list-inline-item.h6
+            button.btn.login-button#loginProfileIcon
+              a(href="/login") Login
+            button.btn.login-button#userProfileIcon(style="display:none;")
+          div#userProfileIconLogout
+            button.btn.login-button#logout-button
+                a(href="/profile") Profile
+            button.btn.login-button#logout-button
+                a(href="/logout") Logout
+    #introSection
+      h1.display-1 Learn To Code
+      h3.display-6 It is 
+        strong FREE
+      h6.display-6 So what are you waiting for?
+      button.btn.getStarted-button
+        a(href="/courses") Get Started 
+        i.fas.fa-arrow-right
+    .coursesSection
+    script(type='text/javascript').
+        var x=!{data}
+        console.log(x)
+        //- console.log('Logged in status:');
+        if (x.login){
+            document.getElementById('userProfileIcon').style.display='block';
+            document.getElementById('userProfileIcon').innerHTML = `
+                ${x.username[0].toUpperCase()}
+            `;
+            document.getElementById('loginProfileIcon').style.display='none';
+        }
+        else{
+            document.getElementById('userProfileIcon').style.display='none';
+            document.getElementById('loginProfileIcon').style.display='block';
+        }
+        document.getElementById('userProfileIcon').addEventListener('click',()=>{
+          if(document.getElementById('userProfileIconLogout').style.display=="none"){
+              document.getElementById('userProfileIconLogout').style.display="flex";
+          }
+          else{
+              document.getElementById('userProfileIconLogout').style.display="none";
+          }
+        })

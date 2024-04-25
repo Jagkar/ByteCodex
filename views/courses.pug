@@ -1,0 +1,170 @@
+doctype html
+html(lang="en")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1.0")
+    title Courses
+    link(rel="stylesheet", href="../static/courses.css")
+  body
+    div.navbar
+        div#logo
+            img(src="../static/img/logo/logo.png", alt="")
+        div#menu
+            ul
+                li.list-inline-item.h6.bg-bottom
+                    a(href="/") Home
+                li.list-inline-item.h6.bg-bottom.selected-button
+                    a(href="/courses") Courses
+                li.list-inline-item.h6
+                    button.btn.login-button#loginProfileIcon
+                      a(href="/login") Login
+                    button.btn.login-button#userProfileIcon(style="display:none;")
+                div#userProfileIconLogout
+                    button.btn.login-button#logout-button
+                        a(href="/profile") Profile
+                    button.btn.login-button#logout-button
+                        a(href="/logout") Logout
+    div#container
+        div.sidebar#sideBarList
+            p.h6 Select filter
+            hr
+            p.cursor#allButton Show All
+
+        div#courseList
+            script(type='text/javascript').
+                var obj=!{obj}
+                console.log(obj)
+                var x=obj.data;
+                console.log(x);
+                function AddingCourses(x) {
+                    var courseList = document.getElementById("courseList");
+                    var sideBarList = document.getElementById("sideBarList");
+                    var domainArray = [];
+                    x.forEach(function(course) {
+                        var courseDiv = document.createElement('div');
+                        add=course.address
+                        courseDiv.innerHTML = `
+                        <div class="subcontainer" id="${course.domain}">
+                            <a class="hoverclass">
+                                <img src="${course.img}">
+                                <div class="card-content" onclick="event.stopPropagation()">
+                                    <h1>${course.name}</h1>
+                                    <p>${course.duration}</p>
+                                    <button id="enrollButton-${course._id}" onclick="enrollCourse('${course._id}')" class="${obj.userInfo.enrolledCourses.includes(course._id) ? 'btn login-button enrolledButton' : 'btn login-button enrollButton'}">
+                                        ${obj.userInfo.enrolledCourses.includes(course._id) ? 'Enrolled' : 'Enroll'}
+                                    </button>
+                                </div>
+                            </a>
+                        </div>
+                        `;
+                        courseList.appendChild(courseDiv); 
+
+                        if (!domainArray.includes(course.domain)) {
+                            var courseDiv2 = document.createElement('p');
+                            courseDiv2.innerHTML = `
+                            <p class="cursor domain" id="${course.domain}" value="${course.domain}">${course.domain}</p>
+                            `;
+                            sideBarList.appendChild(courseDiv2);
+                            domainArray.push(course.domain);
+                        }
+                    });
+
+                    var domainElements = document.querySelectorAll('.domain');
+                    domainElements.forEach(function(domainElement) {
+                        domainElement.addEventListener('click', function() {
+                            var domain = this.getAttribute('id');
+                            filterCoursesByDomain(domain);
+                        });
+                    });
+                    var allButton = document.getElementById('allButton');
+                    allButton.addEventListener('click', function() {
+                        showAllCourses();
+                    });
+                }
+
+                function filterCoursesByDomain(domain) {
+                    var allCourses = document.querySelectorAll('.subcontainer');
+                    allCourses.forEach(function(course) {
+                        var courseDomain = course.getAttribute('id');
+                        if (courseDomain !== domain) {
+                            course.style.display = 'none';
+                        } else {
+                            course.style.display = 'block';
+                        }
+                    });
+                }
+
+                function showAllCourses() {
+                    var allCourses = document.querySelectorAll('.subcontainer');
+                    allCourses.forEach(function(course) {
+                        course.style.display = 'block';
+                    });
+                }
+
+                AddingCourses(x);
+                //- console.log('Logged in status:');
+                if (obj.login){
+                    document.getElementById('userProfileIcon').style.display='block';
+                    document.getElementById('userProfileIcon').innerHTML = `
+                        ${obj.username[0].toUpperCase()}
+                    `;
+                    document.getElementById('loginProfileIcon').style.display='none';
+                }
+                else{
+                    document.getElementById('userProfileIcon').style.display='none';
+                    document.getElementById('loginProfileIcon').style.display='block';
+                }
+
+                document.getElementById('userProfileIcon').addEventListener('click',()=>{
+                    if(document.getElementById('userProfileIconLogout').style.display=="none"){
+                        document.getElementById('userProfileIconLogout').style.display="flex";
+                    }
+                    else{
+                        document.getElementById('userProfileIconLogout').style.display="none";
+                    }
+                })
+                function enrollCourse(courseId) {
+                    const button = document.getElementById(`enrollButton-${courseId}`);
+                    const isEnrolled = button.textContent.trim() === 'Enrolled';
+                    console.log(button.textContent);
+                    fetch(`/enroll?courseId=${courseId}`, {
+                        method: isEnrolled ? 'DELETE' : 'POST',
+                        credentials: 'same-origin'
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            if (isEnrolled) {
+                                // Update UI to show "Enroll"
+                                button.textContent = 'Enroll';
+                                button.disabled = false;
+                                button.style.backgroundColor= "rgb(42 148 164)";
+                                button.style.color= "white";
+
+                            } else {
+                                // Update UI to show "Enrolled"
+                                button.textContent = 'Enrolled';
+                                button.style.backgroundColor= "white";
+                                button.style.color= "grey";
+                                button.style.border= "1px solid grey";
+                                
+                                //- button.disabled = true;
+                            }
+                        } else {
+                            console.error(isEnrolled ? 'Failed to unenroll from the course' : 'Failed to enroll in the course');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error handling course enrollment:', error);
+                    });
+                }
+                
+
+
+
+//- ,
+//-   "name":"Python for Begginers",
+//- "domain":"PYTHON",
+//- "duration":"6 hours",
+//- "desc":"desc of Python",
+//- "img":"../static/img/courseImg/pythonbeg.png",
+//- "address":"pythonForBeginners"
